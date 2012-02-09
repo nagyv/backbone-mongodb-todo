@@ -33,7 +33,7 @@
       if(!is_int(attrs.order) || attrs.order < 0) {
         return 'Order must be an integer';
       }
-      if(_.any(_.keys(attrs), function(elem){return !(elem in ['done', 'order'])})) {
+      if(_.any(_.keys(attrs), function(elem){return !(elem in ['done', 'order', 'text'])})) {
         return 'Invalid attribute name';
       }
     },
