@@ -1,6 +1,9 @@
 // Require libraries
 var fs = require("fs");
 var express = require("express");
+//var todoapp = require('./app/todos.js');
+//require('./build/mongodocs.js');
+
 var site = express.createServer();
 
 // Determine which dist directory to use
@@ -21,6 +24,9 @@ site.use(express.favicon("./favicon.ico"));
 // Ensure all routes go home, client side app..
 site.get("*", function(req, res) {
   fs.createReadStream("./index.html").pipe(res);
+});
+site.post("/todos", function(req, res){
+  res.send('ok');
 });
 
 // Actually listen
