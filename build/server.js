@@ -1,6 +1,7 @@
 // Require libraries
 var fs = require("fs");
 var express = require("express");
+var io = require('socket.io');
 var Db = require('backbone-mongodb/lib/db');
 var $ = require('jquery');
 var Backbone = require('backbone');
@@ -9,14 +10,37 @@ var todoapp = backboneapp.todoapp;
 require('status/modules/todos');
 todoapp.init();
 
+var app = express.createServer(),
+  io = io.listen(app);
+app.use(express.bodyParser());
+
+var clients = [];
+io.sockets.on('connection', function(socket){
+  socket.emit('reset', JSON.stringify(todoapp.Todos.toJSON()));
+  clients.push(socket);
+});
+todoapp.Todos.bind('add', function(model){
+  _.each(clients, function(client){
+    client.emit('new', JSON.stringify(model.toJSON()));
+  })
+});
+todoapp.Todos.bind('reset', function(){
+  _.each(clients, function(client){
+    client.emit('new', JSON.stringify(todoapp.Todos.toJSON()));
+  })
+});
+
 var db = new Db({
   name: 'test',
   host: '127.0.0.1',
   port: 27017
 })
-
-var app = express.createServer();
-app.use(express.bodyParser());
+db.on('database', function(status){
+  var error = status == 'open' ? null : status;
+  todoapp.Todos.fetch(false, function(err){
+    if (err) console.error('Could not connect to database');
+  })
+})
 
 // Determine which dist directory to use
 var dir = process.argv.length > 2 && "./dist/" + process.argv[2];
@@ -79,3 +103,4 @@ app.delete("/todos/:id", function(req, res){
 app.listen(8000);
 
 console.log("Server listening on http://localhost:8000");
+
